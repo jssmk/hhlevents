@@ -13,20 +13,20 @@ from django.utils.translation import ugettext_lazy as _ # _lazy required
 from django.utils.functional import lazy
 from datetime import date
 from django.conf import settings
+from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 
 # Always get a fresh list of png-images from static/img/
 def IMAGES():
     return [ ("/static/img/"+basename(x),basename(x)) for x in glob(settings.HHLREGISTRATIONS_ROOT+"/static/img/*.png") ]
 
-class Event(HappeningsEvent):
-    # Options for registration requirements, also option for not accepting registrations
+class AbstractEvent(HappeningsEvent):
     REG_REQUIREMENT = ( ('RQ', 'Required'),
                         ('OP', 'Optional'),
                         ('NO', 'None') )
     
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     extra_url = models.URLField(blank=True)
-    gforms_url = models.URLField(blank=True)
     registration_requirement = models.CharField(max_length=2, choices=REG_REQUIREMENT)
     max_registrations = models.PositiveSmallIntegerField(default=0)
     close_registrations = models.DateTimeField(blank=True, null=True)
@@ -34,35 +34,9 @@ class Event(HappeningsEvent):
     event_cost = models.PositiveSmallIntegerField(default=0)
     materials_cost = models.PositiveSmallIntegerField(default=0)
     materials_mandatory = models.BooleanField(default=False)
-    hide_join_checkbox = models.BooleanField(default=False)
-    image = models.CharField(max_length=100, choices=lazy(IMAGES, tuple)())
-    
-    def formLink(self):
-        tag = '<a href="' + reverse('registrations:register', args=[str(self.id)]) + '">Form</a>'
-        if self.registration_requirement in ('OP', 'NO'):
-            # in italics if registration is optional
-            tag = '<i>(' + tag + ')</i>'
-        return tag
-    formLink.allow_tags = True
-    formLink.short_description = _('Form link')
-    
-    def getParticipants(self):
-        return Registration.objects.all().filter(event = self.event).order_by('state', 'registered')
-    
-    def getStatsHTML(self):
-        n_AC = Registration.objects.all().filter(event = self.event).filter(state = 'AC').count()
-        n_CC = Registration.objects.all().filter(event = self.event).filter(state = 'CC').count()
-        n_CP = Registration.objects.all().filter(event = self.event).filter(state = 'CP').count()        
-        n_WL = Registration.objects.all().filter(event = self.event).filter(state = 'WL').count()
-        n_CA = Registration.objects.all().filter(event = self.event).filter(state = 'CA').count()
-        n_CR = Registration.objects.all().filter(event = self.event).filter(state = 'CR').count()
-        n_WB = Registration.objects.all().filter(event = self.event).filter(state = 'WB').count()
-        return u'Assumed coming (AC): %s<br/>Confirmed coming (CC): %s</br>Confirmed, pre-payments OK (CP): %s<br/>Waiting-list (WL): %s<br/>Cancelled (CA): %s</br>Cancelled, refunded (CR): %s<br/>Waiting-list (due to ban) (WB): %s' % (n_AC, n_CC, n_CP, n_WL, n_CA, n_CR, n_WB)
-    
+    image = models.CharField(max_length=100, choices=lazy(IMAGES, tuple)())  # 100 liian vähän?
     class Meta:
-        ordering = ["-end_date"]
-        verbose_name = _('event')
-        verbose_name_plural = _('events')
+        abstract = True
     
     def isPast(self):
         if self.repeats('NEVER') and timezone.now() > self.end_date:
@@ -90,6 +64,110 @@ class Event(HappeningsEvent):
             return pvm
         # in case repetition has ended, show nothing
         return None
+
+
+class Event(AbstractEvent):
+    # Options for registration requirements, also option for not accepting registrations
+
+    gforms_url = models.URLField(blank=True)
+    hide_join_checkbox = models.BooleanField(default=False) # pois!
+    
+    def formLink(self):
+        tag = '<a href="' + reverse('registrations:register', args=[str(self.id)]) + '">Form</a>'
+        if self.registration_requirement in ('OP', 'NO'):
+            # in italics if registration is optional
+            tag = '<i>(' + tag + ')</i>'
+        return tag
+    formLink.allow_tags = True
+    formLink.short_description = _('Form link')
+    
+    def getParticipants(self):
+        return Registration.objects.all().filter(event = self.event).order_by('state', 'registered')
+    
+    def getStatsHTML(self):
+        n_AC = Registration.objects.all().filter(event = self.event).filter(state = 'AC').count()
+        n_CC = Registration.objects.all().filter(event = self.event).filter(state = 'CC').count()
+        n_CP = Registration.objects.all().filter(event = self.event).filter(state = 'CP').count()        
+        n_WL = Registration.objects.all().filter(event = self.event).filter(state = 'WL').count()
+        n_CA = Registration.objects.all().filter(event = self.event).filter(state = 'CA').count()
+        n_CR = Registration.objects.all().filter(event = self.event).filter(state = 'CR').count()
+        n_WB = Registration.objects.all().filter(event = self.event).filter(state = 'WB').count()
+        return u'Assumed coming (AC): %s<br/>Confirmed coming (CC): %s</br>Confirmed, pre-payments OK (CP): %s<br/>Waiting-list (WL): %s<br/>Cancelled (CA): %s</br>Cancelled, refunded (CR): %s<br/>Waiting-list (due to ban) (WB): %s' % (n_AC, n_CC, n_CP, n_WL, n_CA, n_CR, n_WB)
+    
+    class Meta:
+        ordering = ["-end_date"]
+        verbose_name = _('event')
+        verbose_name_plural = _('events')
+        # abstract = True # tämä vaaditaan seuraavaksi!
+        
+
+class MessisEvent(AbstractEvent):
+    messis_slug = models.CharField(max_length=255)#, editable=False)#, primary_key=True) # pituus maksimi??
+    #update_hash = models.CharField(max_length=255)
+    #aikatiedot, onko jokin field-tyyppi jota ei voi muokata??
+    
+    #repeat = 'NEVER' #vakio
+    class Meta:
+        ordering = ["-end_date"]
+        verbose_name = _('Messis event')
+        verbose_name_plural = _('Messis events')
+    
+
+    def __init__(self, *args, **kwargs):
+        super(MessisEvent, self).__init__(*args, **kwargs)
+        try:
+            messis_user = User.objects.get(username = 'Messis')
+        except ObjectDoesNotExist:
+            messis_user = User.objects.create_user('Messis', '', uuid.uuid4())
+            messis_user.save()
+        self.created_by = messis_user
+    
+    def save(self, new_slug=""):
+        if new_slug != "":
+            self.messis_slug = new_slug
+            self.extra_url="http://messis.fi/fi/tapahtumat/"+new_slug
+        super(MessisEvent, self).save()
+        
+    def set_title(self, new_title):
+        self.title = new_title
+    def set_start(self, new_date):
+        self.start_date = new_date
+    def set_end(self, new_date):
+        self.end_date = new_date
+    def set_content(self, new_desc, new_img):
+        self.description = new_desc
+        self.image = new_img # tallentuu kaikesta huolimatta dataan ja näkyy esim. /register/issä
+    
+    def messisLink(self):
+        tag = self.messis_slug
+        if self.extra_url != "":
+            tag = '<a href="' + self.extra_url + '">'+self.messis_slug+'</a>'
+        return tag
+    messisLink.allow_tags = True
+    messisLink.short_description = _('Event on www.messis.fi')
+    
+#    def __init__(self):
+#        self.event = Event()
+#        self.event.repeat = 'NEVER' # voi olla että ei tarvi, default on Never
+#    def formLink(self):
+#        self.event.formLink()
+#    def getNextEvent(self):
+#        return self.start_date # never repeats
+#    def isRepeating(self):
+#        return False # never repats
+#    def isCancelled(self):
+#        self.event.isCancelled()
+#    def isPast(self):
+#        if timezone.now() > self.end_date:
+#            return True
+#        return False
+#    def getStatsHTML(self):
+#        self.event.getStatsHTML()
+#    def getParticipants(self):
+#        self.event.getParticipants()
+ 
+
+
 
 class Person(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)

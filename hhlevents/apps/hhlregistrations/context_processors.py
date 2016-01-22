@@ -5,3 +5,5 @@ def organisation_settings(request):
         'META_PUBLISHER':   "helsinki.hacklab.fi",
         'META_DEFAULT_IMG': "img/helsinkihacklab01.png"
     }
+    
+    # ei taideta käyttää??

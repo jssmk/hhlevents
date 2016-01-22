@@ -160,3 +160,13 @@ if len(sys.argv) > 1 and 'test' in sys.argv[1]:
 
 # Markdown settings
 MARKDOWN_EDITOR_INIT_TEMPLATE = "base.html"
+
+# messis.fi API
+MESSIS_API_URL_GET_UPCOMING = "http://messis.fi/fi/?json=messis/get_upcoming_events"
+
+# organisation_settings.py:
+try:
+    from .organisation_settings import *
+except ImportError:
+    print("importerror")
+    pass

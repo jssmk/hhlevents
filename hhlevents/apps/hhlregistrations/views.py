@@ -5,13 +5,16 @@ from django.shortcuts import get_object_or_404
 from django.core.urlresolvers import reverse_lazy
 from django.views.generic import FormView, TemplateView, ListView, DetailView
 from .forms import RegForm
-from .models import Event, Person, Registration
+from .models import Event, Person, Registration, MessisEvent
+from .tasks import SyncMessis
 from django.http import HttpResponse
 from django.core.mail import send_mail, BadHeaderError, EmailMultiAlternatives
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib import messages
 from django.utils import timezone
-
+from itertools import chain
+from operator import attrgetter
+from django.http import Http404
 
 class RegView(FormView):
     form_class = RegForm
@@ -20,7 +23,14 @@ class RegView(FormView):
 
     def get_context_data(self, **kwargs):
         context = super(RegView, self).get_context_data(**kwargs)
-        context['event'] = get_object_or_404(Event, pk=self.kwargs['event_id'])
+        try:
+            context_event = Event.objects.get(pk=self.kwargs['event_id'])
+        except:
+            try:
+                context_event = MessisEvent.objects.get(pk=self.kwargs['event_id'])
+            except:
+                raise Http404("Event does not exist")
+        context['event'] = context_event
         context['show_form'] = True
 
         context['registration_closed'] = False
@@ -36,8 +46,8 @@ class RegView(FormView):
 
         context['show_optional'] = False
         context['show_join'] = True
-        if context['event'].hide_join_checkbox:
-            context['show_join'] = False
+        #if context['event'].hide_join_checkbox:
+        #    context['show_join'] = False
 
         context['show_materials'] = False
         if (    context['event'].materials_cost
@@ -93,14 +103,39 @@ class RegOKView(TemplateView):
 
 
 class ListDetailMixin(object):
-   def get_context_data(self, **kwargs):
-      return super(ListDetailMixin, self).get_context_data(**kwargs)
+    def get_context_data(self, **kwargs):
+        return super(ListDetailMixin, self).get_context_data(**kwargs)
 
+
+class MessisInfo(ListView):
+    contect_object_name = 'messis_info'
+    template_name = 'hhlregistrations/messis_info.html'
+    queryset = MessisEvent.objects.all()
+    def get(self, request, *args, **kwargs):
+        SyncMessis()
+        return super(MessisInfo, self).get(self, request, *args, **kwargs)
+   
+    def ListMessisInformation(self):
+        a = requests.get(url='http://messis.fi/fi/?json=messis/get_upcoming_events&owner=279&dev=1', headers={'User-Agent': 'Mozilla/5.0'})
+        b = json.loads(a.text)
+        print('---->---->--->')
+        htmlLines = []
+        for textLine in pprint.pformat(b).splitlines():
+            htmlLines.append('<br/>%s' % textLine) # or something even nicer
+        htmlText = '\n'.join(htmlLines)
+        return htmlText
+   
 # could need AdminPlus for showing on the admin main page, for now, use URL /admin/reg_sum/
 class Summary(ListDetailMixin, ListView, DetailView):
    context_object_name = 'reg_sum'
    template_name = 'hhlregistrations/summary.html'
-   queryset = Event.objects.all()
+   #queryset = Event.objects.all()
+   #queryset = list(chain(Event.objects.all(), MessisEvent.objects.all())).sort(key=lambda x: x.start_date)
+   def get_queryset(self):
+       # add logic for listing only current events?
+       querylist = list(chain(Event.objects.all(), MessisEvent.objects.all()))
+       return sorted(querylist, key=attrgetter('start_date'))
+   
    slug_field = 'event_slug'
    
    def get(self, request, *args, **kwargs):
@@ -117,7 +152,11 @@ class Summary(ListDetailMixin, ListView, DetailView):
            sel_event = Event.objects.get(uuid=self.kwargs['slug'])
            print(self.kwargs['slug'])
        except:
-           sel_event = None
+           try:
+               sel_event = MessisEvent.objects.get(uuid=self.kwargs['slug'])
+               print(self.kwargs['slug'])
+           except:
+               sel_event = None
        return sel_event
    
    def send_email(self, request, *args, **kwargs):
@@ -142,3 +181,4 @@ class Summary(ListDetailMixin, ListView, DetailView):
        else:
            return HttpResponse('Make sure all fields are entered and valid.')
 
+    

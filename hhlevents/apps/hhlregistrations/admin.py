@@ -8,6 +8,8 @@ from happenings.admin import EventAdmin as HappeningsEventAdmin
 from happenings.admin import CancellationInline
 from django.utils.translation import ugettext as _
 
+from .models import MessisEvent
+
 from .models import Event, Person, Registration
 
 class EventAdmin(HappeningsEventAdmin):
@@ -54,7 +56,70 @@ class EventAdmin(HappeningsEventAdmin):
     date_hierarchy = 'start_date'
     inlines = [CancellationInline]
 
-
+class MessisEventAdmin(HappeningsEventAdmin):
+    # prevent users from adding new Messis Events through admin interface
+    # messis events should be added at www.messis.fi event manager
+    def has_add_permission(self, request):
+        return False
+    readonly_fields = (
+        #(None, {
+        #    'fields': (
+                       'messis_slug',
+                       'start_date', 'end_date', 'all_day', 'repeat',
+                       'end_repeat', 'title', 'description',
+                       'created_by', 'extra_url', 'image',
+        #               )
+        #}),
+    )
+    
+    fieldsets = (
+        ('Messis', {
+        	'fields': ('messis_slug', 'start_date', 'end_date',
+        	           'all_day', 'repeat',
+                       'end_repeat', 'title', 'description',
+                       'created_by', 'extra_url', 'image')
+        }),
+        #(None, {
+        #    'fields': ('start_date', 'end_date', 'all_day', 'repeat',
+        #               'end_repeat', 'title', 'description',
+        #              'created_by', 'extra_url', 'image',
+        #               )
+        #}),
+        ('Location', {
+            'fields': ('location',)
+        }),
+        ('Registrations', {
+            'classes': ('collapse',),
+            'fields': ( 'registration_requirement', 'max_registrations', 'close_registrations',
+                        'event_cost', 'materials_cost', 'materials_mandatory',
+                        'payment_due',
+                       )
+        }),
+        ('Category', {
+            'classes': ('collapse',),
+            'fields': ('categories',)
+        }),
+        ('Tag', {
+            'classes': ('collapse',),
+            'fields': ('tags',)
+        }),
+        ('Color', {
+            'classes': ('collapse',),
+            'fields': (
+                ('background_color', 'background_color_custom'),
+                ('font_color', 'font_color_custom'),
+            )
+        }),
+    )
+    formfield_overrides = {
+        MarkdownField: {'widget': AdminMarkdownWidget},
+        models.TextField: {'widget': AdminMarkdownWidget},
+    }
+    list_display = ('title', 'start_date', 'end_date','messisLink')
+    list_filter = ['start_date']
+    search_fields = ['title']
+    date_hierarchy = 'start_date'
+    inlines = [CancellationInline]
 
 
 class RegistrationAdmin(admin.ModelAdmin):
@@ -67,5 +132,6 @@ class RegistrationAdmin(admin.ModelAdmin):
 admin.site.unregister(HappeningsEvent)
 # And use our own
 admin.site.register(Event, EventAdmin)
+admin.site.register(MessisEvent, MessisEventAdmin)
 admin.site.register(Person)
 admin.site.register(Registration, RegistrationAdmin)   
