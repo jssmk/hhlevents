@@ -1,0 +1,18 @@
+{% extends "admin/base_site.html" %}
+
+<!-- huom, tämä on nyt tehty pitkälti suomeksi, voi vaihtaa englanniksikin, jos tuntuu paremmalta -->
+{% load i18n %}
+{% load template_tools %}
+{% block title %} {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+
+{% block content %}
+
+<h3>{% trans "Upcoming messis.fi events were fetched and updated" %}</h3>
+
+<p>{% trans "Messis events that no longer appear in list of upcoming events were not updated." %}</p>
+<p>{% trans "See your events on Messis API output (json): " %} <a href="http://messis.fi/fi/?json=messis/get_upcoming_events&dev=1&owner={% get_settings "MESSIS_ID_NUM" %}">get_upcoming_events</a>
+
+{% endblock content %}
+
+{{ ListMessisInformation }}
