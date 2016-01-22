@@ -38,6 +38,8 @@ class AbstractEvent(HappeningsEvent):
     class Meta:
         abstract = True
     
+    def classname(self):
+        return self.__class__.__name__
     def isPast(self):
         if self.repeats('NEVER') and timezone.now() > self.end_date:
             return True
