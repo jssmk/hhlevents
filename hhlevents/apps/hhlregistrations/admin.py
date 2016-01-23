@@ -49,7 +49,7 @@ class EventAdmin(HappeningsEventAdmin):
         MarkdownField: {'widget': AdminMarkdownWidget},
         models.TextField: {'widget': AdminMarkdownWidget},
     }
-    list_display = ('title', 'start_date', 'end_date', 'repeat', 'registration_requirement', 'formLink')
+    list_display = ('title', 'start_date', 'duration', 'repeat', 'registration_requirement', 'formLink')
     list_filter = ['start_date']
     search_fields = ['title']
     date_hierarchy = 'start_date'
@@ -88,7 +88,6 @@ class MessisEventAdmin(HappeningsEventAdmin):
             'fields': ('location',)
         }),
         ('Registrations', {
-            'classes': ('collapse',),
             'fields': ( 'registration_requirement', 'max_registrations', 'close_registrations',
                         'event_cost', 'materials_cost', 'materials_mandatory',
                         'payment_due',
@@ -114,7 +113,7 @@ class MessisEventAdmin(HappeningsEventAdmin):
         MarkdownField: {'widget': AdminMarkdownWidget},
         models.TextField: {'widget': AdminMarkdownWidget},
     }
-    list_display = ('title', 'start_date', 'end_date','messisLink')
+    list_display = ('title', 'start_date', 'duration','formLink','messisLink')
     list_filter = ['start_date']
     search_fields = ['title']
     date_hierarchy = 'start_date'

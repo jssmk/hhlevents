@@ -67,14 +67,6 @@ class AbstractEvent(HappeningsEvent):
             return pvm
         # in case repetition has ended, show nothing
         return None
-
-
-class Event(AbstractEvent):
-    # Options for registration requirements, also option for not accepting registrations
-
-    gforms_url = models.URLField(blank=True)
-    hide_join_checkbox = models.BooleanField(default=False) # pois!
-    
     def formLink(self):
         if self.registration_requirement in ('RQ', 'OP'):
             return  '<a href="' + reverse('registrations:register', args=[str(self.id)]) + '">Event page and form</a>'
@@ -82,6 +74,27 @@ class Event(AbstractEvent):
     formLink.allow_tags = True
     formLink.short_description = _('Event page and form')
     
+    def duration(self):
+        delta = self.end_date - self.start_date
+        if delta.days > 0:
+           # Calculate more intuitive duration in day span
+           # eg. a weekend event would be spanning 3 different days
+           # Could be improved to account only for "all day events"
+           start_0 = date(self.start_date.year, self.start_date.month, self.start_date.day)
+           end_0 = date(self.end_date.year, self.end_date.month, self.end_date.day)
+           delta_endpoints = end_0 - start_0
+           days_span = ['Spans', str(delta_endpoints.days + 1), 'days']
+           return _(' '.join(days_span))
+        delta_str = str(int(delta.seconds / 3600)) + ' h ' + str(int(delta.seconds % 3600 / 60)) + ' min '
+        return delta_str
+    duration.short_description = _('Event duration')
+
+class Event(AbstractEvent):
+    # Options for registration requirements, also option for not accepting registrations
+
+    gforms_url = models.URLField(blank=True)
+    hide_join_checkbox = models.BooleanField(default=False) # pois!
+        
     def getParticipants(self):
         return Registration.objects.all().filter(event = self.event).order_by('state', 'registered')
     
@@ -204,7 +217,7 @@ class Registration(models.Model):
     paid = models.DateTimeField(blank=True, null=True)
     event = models.ForeignKey(Event, related_name='persons', on_delete=models.CASCADE)
     person = models.ForeignKey(Person, related_name='events', on_delete=models.CASCADE)
-    registered = models.DateTimeField(default=datetime.datetime.now)
+    registered = models.DateTimeField(default=timezone.now)
     cancelled = models.DateTimeField(blank=True, null=True)
     state = models.CharField(max_length=2, choices=STATES)
     wants_materials = models.BooleanField(default=False)
