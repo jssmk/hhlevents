@@ -41,7 +41,7 @@
 <table>
    <tr><td>{% trans "Event begins" %}</td><td>{{ object.start_date|date:"D d.m.Y H:i" }}</td></tr><!-- tähän saisi jostain ehkä jonkun locale:n mukaisen esitystavan -->
    <tr><td>{% trans "Event ends" %}</td><td>{{ object.end_date|date:"D d.m.Y H:i"  }}</td></tr>
-   <tr><td>{% trans "Location" %}</td><td>{% for loc in list_item.location.all %} | {{ loc }}{% endfor %}</td></tr>
+   <tr><td>{% trans "Location" %}</td><td>{% for loc in object.location.all %}{{ loc }}  {% endfor %}</td></tr>
    <tr><td>{% trans "Registration requirement" %}</td><td>{{ object.get_registration_requirement_display }}</td></tr>   
 {% if object.registration_requirement == 'OP' or object.registration_requirement == 'RQ' %} 
    <tr><td>{% trans "Max. allowed participants" %}</td><td>{{ object.max_registrations }}</td></tr>
@@ -51,7 +51,9 @@
    <tr><td>{% trans "Materials fee" %}</td><td>{{ object.materials_cost }}</td></tr>
    <tr><td>{% trans "Materials mandatory" %}</td><td>{{ object.materials_mandatory }}</td></tr>
    <tr><td>{% trans "Due date" %}</td><td>{{ object.payment_due|date:"D d.m.Y H:i"  }}</td></tr>
-   <tr><td>{% trans "Separate form" %}</td><td>{{ object.gforms_url }}</td></tr>
+   {% if object.gforms_url %}
+   <tr><td>{% trans "Separate form" %}</td><td><a href="{{ object.gforms_url }}">{% trans "link" %}</a></td></tr>
+   {% endif %}
 </table>
 
     {% if object.cancellations.count > 0 %} 

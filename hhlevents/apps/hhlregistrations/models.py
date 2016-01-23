@@ -23,16 +23,17 @@ def IMAGES():
 class AbstractEvent(HappeningsEvent):
     REG_REQUIREMENT = ( ('RQ', 'Required'),
                         ('OP', 'Optional'),
-                        ('NO', 'None') )
+                        ('NO', 'None'),
+                        ('HA', 'Handled by the organiser' ))
     
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     extra_url = models.URLField(blank=True)
     registration_requirement = models.CharField(max_length=2, choices=REG_REQUIREMENT)
-    max_registrations = models.PositiveSmallIntegerField(default=0)
+    max_registrations = models.PositiveSmallIntegerField(default=None)
     close_registrations = models.DateTimeField(blank=True, null=True)
     payment_due = models.DateTimeField(blank=True, null=True)
-    event_cost = models.PositiveSmallIntegerField(default=0)
-    materials_cost = models.PositiveSmallIntegerField(default=0)
+    event_cost = models.PositiveSmallIntegerField(default=None)
+    materials_cost = models.PositiveSmallIntegerField(default=None)
     materials_mandatory = models.BooleanField(default=False)
     image = models.CharField(max_length=100, choices=lazy(IMAGES, tuple)())  # 100 liian vähän?
     class Meta:
