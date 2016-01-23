@@ -51,6 +51,9 @@
    <tr><td>{% trans "Materials fee" %}</td><td>{{ object.materials_cost }}</td></tr>
    <tr><td>{% trans "Materials mandatory" %}</td><td>{{ object.materials_mandatory }}</td></tr>
    <tr><td>{% trans "Due date" %}</td><td>{{ object.payment_due|date:"D d.m.Y H:i"  }}</td></tr>
+   {% if object.extra_url %}
+   <tr><td>{% trans "Extra URL" %}</td><td><a href="{{ object.extra_url }}">{% trans "link" %}</a></td></tr>
+   {% endif %}   
    {% if object.gforms_url %}
    <tr><td>{% trans "Separate form" %}</td><td><a href="{{ object.gforms_url }}">{% trans "link" %}</a></td></tr>
    {% endif %}

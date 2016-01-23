@@ -36,6 +36,11 @@
         <div id="event_description">
         {{ event.description|markdown }}
        </div>
+       <div id="extra_url">
+       {% if event.extra_url %}
+       <a href="{{ event.extra_url }}">{% trans "See here for more information" %}<a>
+       {% endif %}
+       </div>
     </div>
     
     {% if event.registration_requirement = 'OP' %}
