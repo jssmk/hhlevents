@@ -29,11 +29,11 @@ class AbstractEvent(HappeningsEvent):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     extra_url = models.URLField(blank=True)
     registration_requirement = models.CharField(max_length=2, choices=REG_REQUIREMENT, default='NO')
-    max_registrations = models.PositiveSmallIntegerField(default=None)
+    max_registrations = models.PositiveSmallIntegerField(default=None, blank=True)
     close_registrations = models.DateTimeField(blank=True, null=True)
     payment_due = models.DateTimeField(blank=True, null=True)
-    event_cost = models.PositiveSmallIntegerField(default=None)
-    materials_cost = models.PositiveSmallIntegerField(default=None)
+    event_cost = models.PositiveSmallIntegerField(default=None, blank=True)
+    materials_cost = models.PositiveSmallIntegerField(default=None, blank=True)
     materials_mandatory = models.BooleanField(default=False)
     image = models.CharField(max_length=100, choices=lazy(IMAGES, tuple)())  # 100 liian vähän?
     class Meta:
@@ -78,7 +78,7 @@ class AbstractEvent(HappeningsEvent):
         delta = self.end_date - self.start_date
         if delta.days > 0:
            # Calculate more intuitive duration in day span
-           # eg. a weekend event would be spanning 3 different days
+           # eg. a whole weekend event Fri-Sun would be spanning 3 different days
            # Could be improved to account only for "all day events"
            start_0 = date(self.start_date.year, self.start_date.month, self.start_date.day)
            end_0 = date(self.end_date.year, self.end_date.month, self.end_date.day)
@@ -89,15 +89,6 @@ class AbstractEvent(HappeningsEvent):
         return delta_str
     duration.short_description = _('Event duration')
 
-class Event(AbstractEvent):
-    # Options for registration requirements, also option for not accepting registrations
-
-    gforms_url = models.URLField(blank=True)
-    hide_join_checkbox = models.BooleanField(default=False) # pois!
-        
-    def getParticipants(self):
-        return Registration.objects.all().filter(event = self.event).order_by('state', 'registered')
-    
     def getStatsHTML(self):
         n_AC = Registration.objects.all().filter(event = self.event).filter(state = 'AC').count()
         n_CC = Registration.objects.all().filter(event = self.event).filter(state = 'CC').count()
@@ -107,20 +98,24 @@ class Event(AbstractEvent):
         n_CR = Registration.objects.all().filter(event = self.event).filter(state = 'CR').count()
         n_WB = Registration.objects.all().filter(event = self.event).filter(state = 'WB').count()
         return u'Assumed coming (AC): %s<br/>Confirmed coming (CC): %s</br>Confirmed, pre-payments OK (CP): %s<br/>Waiting-list (WL): %s<br/>Cancelled (CA): %s</br>Cancelled, refunded (CR): %s<br/>Waiting-list (due to ban) (WB): %s' % (n_AC, n_CC, n_CP, n_WL, n_CA, n_CR, n_WB)
-    
+
+class Event(AbstractEvent):
+    gforms_url = models.URLField(blank=True)
+    hide_join_checkbox = models.BooleanField(default=False) # Not needed anymore, should be removed from here and elsewhere
+        
+    def getParticipants(self):
+        return Registration.objects.all().filter(event = self.event).order_by('state', 'registered')
+
     class Meta:
         ordering = ["-end_date"]
         verbose_name = _('event')
-        verbose_name_plural = _('events')
-        # abstract = True # tämä vaaditaan seuraavaksi!
-        
+        verbose_name_plural = _('events')        
 
 class MessisEvent(AbstractEvent):
     messis_slug = models.CharField(max_length=255)#, editable=False)#, primary_key=True) # pituus maksimi??
     #update_hash = models.CharField(max_length=255)
     #aikatiedot, onko jokin field-tyyppi jota ei voi muokata??
     
-    #repeat = 'NEVER' #vakio
     class Meta:
         ordering = ["-end_date"]
         verbose_name = _('Messis event')
@@ -129,6 +124,7 @@ class MessisEvent(AbstractEvent):
 
     def __init__(self, *args, **kwargs):
         super(MessisEvent, self).__init__(*args, **kwargs)
+        self.repeats = 'NEVER'
         try:
             messis_user = User.objects.get(username = 'Messis')
         except ObjectDoesNotExist:
@@ -159,30 +155,8 @@ class MessisEvent(AbstractEvent):
         return tag
     messisLink.allow_tags = True
     messisLink.short_description = _('Event on www.messis.fi')
-    
-#    def __init__(self):
-#        self.event = Event()
-#        self.event.repeat = 'NEVER' # voi olla että ei tarvi, default on Never
-#    def formLink(self):
-#        self.event.formLink()
-#    def getNextEvent(self):
-#        return self.start_date # never repeats
-#    def isRepeating(self):
-#        return False # never repats
-#    def isCancelled(self):
-#        self.event.isCancelled()
-#    def isPast(self):
-#        if timezone.now() > self.end_date:
-#            return True
-#        return False
-#    def getStatsHTML(self):
-#        self.event.getStatsHTML()
-#    def getParticipants(self):
-#        self.event.getParticipants()
+
  
-
-
-
 class Person(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     first_name = models.CharField(max_length=150)
@@ -221,8 +195,7 @@ class Registration(models.Model):
     cancelled = models.DateTimeField(blank=True, null=True)
     state = models.CharField(max_length=2, choices=STATES)
     wants_materials = models.BooleanField(default=False)
-#   ajankohta milloin ilmoittautui? jonottaminen?
-
+    
     class Meta:
         unique_together = (('event', 'person'),)
         ordering = ["event"]

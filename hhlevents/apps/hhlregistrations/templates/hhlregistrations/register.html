@@ -135,31 +135,6 @@
         </div>
         {% endif %}
         <!-- endif show materials -->
-        
-        
-        <!-- Valinnainen lisälomake jäseneksi liittymiseksi, jätetään toistaiseksi näin -->
-        {% if show_join %}
-        <div class="row">
-            <div class="col-md-2">
-                {{ form.join.label_tag }}
-            </div>
-            <div class="col-md-10">
-                {{ form.join.errors }}
-                {{ form.join }}
-                Olen lukenut <a href="http://helsinki.hacklab.fi/liity/" target="_blank">liittymissivun</a> ja hyväksyn <a href="http://helsinki.hacklab.fi/yhdistys/yhdistyksen-saannot/" target="_blank">yhdistyksen säännöt</a>.
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-2">
-                {{ form.city.label_tag }}
-            </div>
-            <div class="col-md-10">
-                {{ form.city.errors }}
-                {{ form.city }}
-            </div>
-        </div>
-        {% endif %}
-        <!-- endif show join -->
                 
         <input type="submit" class="btn btn-primary" value="Ilmoittaudu">
     </form>
