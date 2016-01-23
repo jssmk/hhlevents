@@ -24,7 +24,6 @@ class EventAdmin(HappeningsEventAdmin):
             'fields': ('location',)
         }),
         ('Registrations', {
-            'classes': ('collapse',),
             'fields': ( 'registration_requirement', 'max_registrations', 'close_registrations',
                         'event_cost', 'materials_cost', 'materials_mandatory',
                         'payment_due', 'hide_join_checkbox',
@@ -50,7 +49,7 @@ class EventAdmin(HappeningsEventAdmin):
         MarkdownField: {'widget': AdminMarkdownWidget},
         models.TextField: {'widget': AdminMarkdownWidget},
     }
-    list_display = ('title', 'start_date', 'end_date', 'repeat', 'end_repeat', 'formLink')
+    list_display = ('title', 'start_date', 'end_date', 'repeat', 'registration_requirement', 'formLink')
     list_filter = ['start_date']
     search_fields = ['title']
     date_hierarchy = 'start_date'

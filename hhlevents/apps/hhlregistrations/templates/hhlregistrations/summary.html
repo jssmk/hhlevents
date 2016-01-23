@@ -22,7 +22,7 @@
 {% block content %}
 
 <h3>{{ object }} {% if object.classname == 'MessisEvent' %} &#x24dc;{% endif %}</h3>
-{% if object.isPast %}<h4 style="color: grey">{% trans "Note! The event has ended" %}</h4>{% endif %}
+{% if object.isPast %}<p style="color: grey; size: 16pt; display: inline-block">{% trans "Note! The event has ended" %}</p>{% endif %}
 
 <div style="float:right;" class="no-print">
   <table>
@@ -38,6 +38,7 @@
 </div>
 
        <!-- Tapahtuman perustiedot -->
+{% if object %}
 <table>
    <tr><td>{% trans "Event begins" %}</td><td>{{ object.start_date|date:"D d.m.Y H:i" }}</td></tr><!-- tähän saisi jostain ehkä jonkun locale:n mukaisen esitystavan -->
    <tr><td>{% trans "Event ends" %}</td><td>{{ object.end_date|date:"D d.m.Y H:i"  }}</td></tr>
@@ -92,6 +93,8 @@
 	   </form>
 	</div>
 {% endif %}
+
+{% endif %}<!-- endif object -->
 
 {% endblock content %}
 

@@ -28,7 +28,7 @@ class AbstractEvent(HappeningsEvent):
     
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     extra_url = models.URLField(blank=True)
-    registration_requirement = models.CharField(max_length=2, choices=REG_REQUIREMENT)
+    registration_requirement = models.CharField(max_length=2, choices=REG_REQUIREMENT, default='NO')
     max_registrations = models.PositiveSmallIntegerField(default=None)
     close_registrations = models.DateTimeField(blank=True, null=True)
     payment_due = models.DateTimeField(blank=True, null=True)
@@ -76,13 +76,11 @@ class Event(AbstractEvent):
     hide_join_checkbox = models.BooleanField(default=False) # pois!
     
     def formLink(self):
-        tag = '<a href="' + reverse('registrations:register', args=[str(self.id)]) + '">Form</a>'
-        if self.registration_requirement in ('OP', 'NO'):
-            # in italics if registration is optional
-            tag = '<i>(' + tag + ')</i>'
-        return tag
+        if self.registration_requirement in ('RQ', 'OP'):
+            return  '<a href="' + reverse('registrations:register', args=[str(self.id)]) + '">Event page and form</a>'
+        return '<a href="' + reverse('registrations:register', args=[str(self.id)]) + '">Event page</a>'
     formLink.allow_tags = True
-    formLink.short_description = _('Form link')
+    formLink.short_description = _('Event page and form')
     
     def getParticipants(self):
         return Registration.objects.all().filter(event = self.event).order_by('state', 'registered')
