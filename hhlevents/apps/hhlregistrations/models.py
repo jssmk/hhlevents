@@ -42,12 +42,12 @@ class AbstractEvent(HappeningsEvent):
     def classname(self):
         return self.__class__.__name__
     def isPast(self):
-        if self.repeats('NEVER') and timezone.now() > self.end_date:
+        if self.repeat == 'NEVER' and timezone.now() > self.end_date:
             return True
-        elif not self.repeats('NEVER') and self.end_repeat < self.end_date.date():
+        elif not self.repeat == 'NEVER' and self.end_repeat < self.end_date.date():
             # Error state, handle somehow differently later on
             return False
-        elif not self.repeats('NEVER') and self.end_repeat <= timezone.now().date():
+        elif not self.repeat == 'NEVER' and self.end_repeat <= timezone.now().date():
             return True
         return False
     def isCancelled(self):
@@ -55,11 +55,11 @@ class AbstractEvent(HappeningsEvent):
             return True
         return False
     def isRepeating(self):
-        if self.repeats('NEVER'):
+        if self.repeat == 'NEVER':
             return False
         return True
     def getNextEvent(self): # next occurrence of this happening
-        if self.repeats('NEVER'):
+        if self.repeat == 'NEVER':
             return self.start_date
         elif self.end_repeat > timezone.now().date():
             next = get_next_event([self], timezone.now())
