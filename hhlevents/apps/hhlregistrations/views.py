@@ -40,7 +40,8 @@ class RegView(FormView):
             context['show_form'] = False
 
         context['waiting_list'] = False
-        if (    context['event'].max_registrations > 0
+        if (context['event'].max_registrations
+            and context['event'].max_registrations > 0
             and Registration.objects.filter(state__in=('AC', 'CC')).count() >= context['event'].max_registrations):
             context['waiting_list'] = True
 
