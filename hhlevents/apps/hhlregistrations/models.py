@@ -5,7 +5,7 @@ from os.path import basename
 from django.db import models
 from django_markdown.models import MarkdownField
 from django_markdown.fields import MarkdownFormField
-from happenings.models import Event as HappeningsEvent
+from happenings.models import Event as HappeningsEvent, Location as HappeningsLocation
 from happenings.utils.next_event import get_next_event
 from django.utils import timezone
 from django.core.urlresolvers import reverse
@@ -132,8 +132,8 @@ class MessisEvent(AbstractEvent):
             messis_user.save()
         self.created_by = messis_user
     
-    def save(self, new_slug=""):
-        if new_slug != "":
+    def save(self, new_slug=None):
+        if new_slug != None:
             self.messis_slug = new_slug
             self.extra_url="http://messis.fi/fi/tapahtumat/"+new_slug
         super(MessisEvent, self).save()
@@ -147,7 +147,14 @@ class MessisEvent(AbstractEvent):
     def set_content(self, new_desc, new_img):
         self.description = new_desc
         self.image = new_img # tallentuu kaikesta huolimatta dataan ja näkyy esim. /register/issä
-    
+    def set_location(self, new_name, new_address, new_city, new_lat, new_lon):
+        try:
+            location = Location.objects.get(name = new_name[:255])
+        except ObjectDoesNotExist:
+            location = Location.objects.create(name = new_name[:255])
+            location.save()
+        self.location.create(name = new_name[:255])
+        
     def messisLink(self):
         tag = self.messis_slug
         if self.extra_url != "":
@@ -156,7 +163,11 @@ class MessisEvent(AbstractEvent):
     messisLink.allow_tags = True
     messisLink.short_description = _('Event on www.messis.fi')
 
- 
+class Location(HappeningsLocation):
+    messis_id  = models.CharField(max_length=16, blank=True, null=True)
+    latitude   = models.FloatField(_('Latitude'), blank=True, null=True)
+    longitude  = models.FloatField(_('Longitude'), blank=True, null=True)
+
 class Person(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     first_name = models.CharField(max_length=150)
