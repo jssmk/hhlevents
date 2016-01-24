@@ -29,11 +29,11 @@ class AbstractEvent(HappeningsEvent):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     extra_url = models.URLField(blank=True)
     registration_requirement = models.CharField(max_length=2, choices=REG_REQUIREMENT, default='NO')
-    max_registrations = models.PositiveSmallIntegerField(default=None, blank=True)
+    max_registrations = models.PositiveSmallIntegerField(default=None, blank=True, null=True)
     close_registrations = models.DateTimeField(blank=True, null=True)
     payment_due = models.DateTimeField(blank=True, null=True)
-    event_cost = models.PositiveSmallIntegerField(default=None, blank=True)
-    materials_cost = models.PositiveSmallIntegerField(default=None, blank=True)
+    event_cost = models.PositiveSmallIntegerField(default=None, blank=True, null=True)
+    materials_cost = models.PositiveSmallIntegerField(default=None, blank=True, null=True)
     materials_mandatory = models.BooleanField(default=False)
     image = models.CharField(max_length=100, choices=lazy(IMAGES, tuple)())  # 100 liian vähän?
     class Meta:
