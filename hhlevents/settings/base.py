@@ -82,16 +82,15 @@ WSGI_APPLICATION = 'hhlevents.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 
+import environ as djangoenviron
+env = djangoenviron.Env()
+if os.path.isfile('.env'):
+    djangoenviron.Env.read_env('.env')
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': os.environ.get('DJANGO_DB_NAME', 'hhlevents'),
-        'USER': os.environ.get('DJANGO_DB_USER', 'hhlevents'),
-        'PASSWORD': os.environ.get('DJANGO_DB_PASSWORD', ''),
-        'HOST': os.environ.get('DJANGO_DB_HOST', ''),
-        'PORT': '',
-    }
+    'default': env.db("DATABASE_URL", default="postgres:///hhlevents"),
+#     'default': djangoenviron.Env.db(var="", default="postgres:///hhlevents"),
 }
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
