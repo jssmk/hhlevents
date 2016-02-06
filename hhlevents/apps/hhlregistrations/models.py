@@ -147,14 +147,12 @@ class MessisEvent(AbstractEvent):
     def set_content(self, new_desc, new_img):
         self.description = new_desc
         self.image = new_img # tallentuu kaikesta huolimatta dataan ja näkyy esim. /register/issä
-    def set_location(self, new_name, new_address, new_city, new_lat, new_lon):
+    def set_location(self, new_name):
         try:
-            location = Location.objects.get(name = new_name[:255])
+            new_location = HappeningsLocation.objects.get(name = new_name)
+            self.location.add(new_location)
         except ObjectDoesNotExist:
-            location = Location.objects.create(name = new_name[:255])
-            location.save()
-        self.location.create(name = new_name[:255])
-        
+            return # handle this case somehow better later
     def messisLink(self):
         tag = self.messis_slug
         if self.extra_url != "":

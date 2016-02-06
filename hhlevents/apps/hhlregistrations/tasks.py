@@ -74,6 +74,13 @@ def SyncMessis():
         m_event.set_end(tz.localize(datetime.strptime(concat_end_time, '%Y-%m-%d %H:%M:%S') ) )
         
         m_event.set_content(ev['post_content'], ev['image_url'])
+        #try:
+        m_event_loc_ref = locations[ev['location_id']]
+        m_event_location = m_event_loc_ref['location_name'][:255] 
+        #     m_event.set_location(m_event_location)
+        #except ObjectDoesNotExist:
+        #     pass
+        m_event.set_location(m_event_location)
         m_event.save(ev['slug'])
         
 
