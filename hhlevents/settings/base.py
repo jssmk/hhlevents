@@ -3,10 +3,14 @@ import sys
 import os
 from os.path import join, abspath, dirname
 
+import environ
+
 # Normally you should not import ANYTHING from Django directly
 # into your settings, but ImproperlyConfigured is an exception.
 from django.core.exceptions import ImproperlyConfigured
-from os import environ
+
+#from os import environ
+
 def get_env_setting(setting):
 	""" Get the environment setting or return exception """
 	try:
@@ -17,28 +21,32 @@ def get_env_setting(setting):
 
 
 # PATH vars
-
+# check if needed or not!
 here = lambda *x: join(abspath(dirname(__file__)), *x)
 PROJECT_ROOT = here("..")
 root = lambda *x: join(abspath(PROJECT_ROOT), *x)
 
+ROOT_DIR = environ.Path(__file__) - 2
+env = environ.Env()
+
+
 sys.path.insert(0, root('apps'))
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'mysupasiikrit')
+SECRET_KEY = env('DJANGO_SECRET_KEY', default='mysupasiikrit')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 # Do not change this, set the ENV variable if you need to change the backend
-EMAIL_BACKEND = environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
 
-EMAIL_HOST = environ.get('EMAIL_HOST', 'localhost')
-EMAIL_HOST_PASSWORD = environ.get('EMAIL_HOST_PASSWORD', '')
-EMAIL_PORT = environ.get('EMAIL_PORT', 25)
-EMAIL_HOST_USER = environ.get('EMAIL_HOST_USER', '')
-DEFAULT_FROM_EMAIL=environ.get('EMAIL_DEFAULT_FROM', 'noreply@%s' % 'example.com')
+EMAIL_HOST = env('EMAIL_HOST', default='localhost')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
+EMAIL_PORT = env('EMAIL_PORT', default=25)
+EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+DEFAULT_FROM_EMAIL = env('EMAIL_DEFAULT_FROM', default='noreply@example.com')
 
 
 ALLOWED_HOSTS = []
@@ -112,16 +120,16 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = str(ROOT_DIR('static'))
 
 MEDIA_ROOT = root('assets', 'uploads')
 MEDIA_URL = '/media/'
 
 # Additional locations of static files
 
-STATICFILES_DIRS = (
-    root('assets'),
-)
-STATIC_ROOT = root('static')
+#STATICFILES_DIRS = (
+#    root('assets'),
+#)
 
 TEMPLATE_DIRS = (
     root('templates'), 
